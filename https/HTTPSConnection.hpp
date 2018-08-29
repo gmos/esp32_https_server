@@ -11,6 +11,7 @@
 #include <Arduino.h>
 
 #include <string>
+#include <functional>
 
 // Required for SSL
 #include "openssl/ssl.h"

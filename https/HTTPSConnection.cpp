@@ -455,7 +455,7 @@ void HTTPSConnection::loop() {
 					}
 
 					// Create request context
-					HTTPRequest req  = HTTPRequest(this, _httpHeaders, resolvedResource.getParams());
+					HTTPRequest req  = HTTPRequest(this, _httpHeaders, resolvedResource.getParams(), _httpResource, _httpMethod);
 					HTTPResponse res = HTTPResponse(this);
 
 					// Add default headers to the response
@@ -464,9 +464,29 @@ void HTTPSConnection::loop() {
 						res.setHeader((*header)->_name, (*header)->_value);
 					}
 
-					// Call the callback
-					HTTPS_DLOG("[   ] Calling handler function");
-					resolvedResource.getMatchingNode()->_callback(&req, &res);
+					// Callback for the actual resource
+					HTTPSCallbackFunction * resourceCallback = resolvedResource.getMatchingNode()->_callback;
+
+					// Get the current middleware chain
+					auto vecMw = _resResolver->getMiddleware();
+
+					// Store references to the bound functions
+					std::vector<std::function<void()>> boundFunctionsVector(vecMw.size()+1);
+
+					// Anchor of the chain is the actual resource. The call to the handler is bound here
+					std::function<void()> next = std::function<void()>(std::bind(resourceCallback, &req, &res));
+					boundFunctionsVector.push_back(next);
+
+					// Go back in the middleware chain and glue everything together
+					auto itMw = vecMw.rbegin();
+					while(itMw != vecMw.rend()) {
+						next = std::function<void()>(std::bind((*itMw), &req, &res, next));
+						boundFunctionsVector.push_back(next);
+						itMw++;
+					}
+
+					// Call the whole chain
+					next();
 
 					// The callback-function should have read all of the request body.
 					// However, if it does not, we need to clear the request body now,
