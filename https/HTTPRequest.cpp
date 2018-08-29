@@ -9,10 +9,12 @@
 
 namespace httpsserver {
 
-HTTPRequest::HTTPRequest(ConnectionContext * con, HTTPHeaders * headers, ResourceParameters * params):
+HTTPRequest::HTTPRequest(ConnectionContext * con, HTTPHeaders * headers, ResourceParameters * params, std::string requestString, std::string method):
 	_con(con),
 	_headers(headers),
-	_params(params) {
+	_params(params),
+	_requestString(requestString),
+	_method(method) {
 
 	HTTPHeader * contentLength = headers->get("Content-Length");
 	if (contentLength == NULL) {
@@ -41,6 +43,14 @@ std::string HTTPRequest::getHeader(std::string name) {
 	} else {
 		return std::string();
 	}
+}
+
+std::string HTTPRequest::getRequestString() {
+	return _requestString;
+}
+
+std::string HTTPRequest::getMethod() {
+	return _method;
 }
 
 size_t HTTPRequest::readBytes(byte * buffer, size_t length) {

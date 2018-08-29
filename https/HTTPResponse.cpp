@@ -43,6 +43,14 @@ void HTTPResponse::setStatusText(std::string statusText) {
 	_statusText = statusText;
 }
 
+uint16_t HTTPResponse::getStatusCode() {
+	return _statusCode;
+}
+
+std::string HTTPResponse::getStatusText() {
+	return _statusText;
+}
+
 void HTTPResponse::setHeader(std::string name, std::string value) {
 	_headers.set(new HTTPHeader(name, value));
 }
