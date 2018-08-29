@@ -176,6 +176,10 @@ void notfoundCallback(HTTPRequest * req, HTTPResponse * res) {
 	res->print("{\"error\":\"not found\", \"code\":404}");
 }
 
+void loggingMiddleware(HTTPRequest * req, HTTPResponse * res, std::function<void()> next) {
+	next();
+	Serial.printf("loggingMiddleware: %3d %s %s\n", res->getStatusCode(), req->getMethod().c_str(), req->getRequestString().c_str());
+}
 
 
 //The setup function is called once at startup of the sketch
@@ -302,6 +306,8 @@ void serverTask(void *params) {
 	// Add a default header to the server that will be added to every response. In this example, we
 	// use it only for adding the server name, but it could also be used to add CORS-headers to every response
 	server.setDefaultHeader("Server", "esp32-http-server");
+
+	server.addMiddleware(&loggingMiddleware);
 
 	// The web server can be start()ed and stop()ed. When it's stopped, it will close its server port and
 	// all open connections and free the resources. Theoretically, it should be possible to run multiple
