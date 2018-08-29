@@ -106,7 +106,7 @@ void HTTPResponse::printHeader() {
 
 		// Status line, like: "HTTP/1.1 200 OK\r\n"
 				//intToString(_statusCode)
-		std::string statusLine = "HTTP/1.1 200 " + _statusText + "\r\n";
+		std::string statusLine = "HTTP/1.1 " + intToString(_statusCode) + " " + _statusText + "\r\n";
 		printInternal(statusLine, true);
 
 		// Each header, like: "Host: myEsp32\r\n"

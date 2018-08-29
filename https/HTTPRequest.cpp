@@ -36,6 +36,10 @@ ResourceParameters * HTTPRequest::getParams() {
 	return _params;
 }
 
+void HTTPRequest::setHeader(std::string name, std::string value) {
+	_headers->set(new HTTPHeader(name, value));
+}
+
 std::string HTTPRequest::getHeader(std::string name) {
 	HTTPHeader * h = _headers->get(name);
 	if (h != NULL) {
@@ -94,6 +98,70 @@ void HTTPRequest::discardRequestBody() {
 	byte buf[16];
 	while(!requestComplete()) {
 		readBytes(buf, 16);
+	}
+}
+
+std::string HTTPRequest::getBasicAuthUser() {
+	std::string token = decodeBasicAuthToken();
+	size_t splitpoint = token.find(":");
+	if (splitpoint != std::string::npos && splitpoint > 0) {
+		return token.substr(0, splitpoint);
+	} else {
+		return std::string();
+	}
+}
+
+std::string HTTPRequest::getBasicAuthPassword() {
+	std::string token = decodeBasicAuthToken();
+	size_t splitpoint = token.find(":");
+	if (splitpoint != std::string::npos && splitpoint > 0) {
+		return token.substr(splitpoint+1);
+	} else {
+		return std::string();
+	}
+}
+
+
+std::string HTTPRequest::decodeBasicAuthToken() {
+
+	std::string basicAuthString = getHeader("Authorization");
+
+	// Get the length of the token
+	size_t sourceLength = basicAuthString.length();
+
+	// Only handle basic auth tokens
+	if (basicAuthString.substr(0, 6) != "Basic ") {
+		Serial.println("no basic");
+		return std::string();
+	}
+
+	// If the token is too long, skip
+	if (sourceLength > 100) {
+		Serial.println("too long");
+		return std::string();
+
+	} else {
+		// Try to decode. As we are using mbedtls anyway, we can use that function
+		unsigned char * bufOut = new unsigned char[basicAuthString.length()];
+		size_t outputLength = 0;
+		int res = mbedtls_base64_decode(
+				bufOut,
+				sourceLength,
+				&outputLength,
+				((const unsigned char *)basicAuthString.substr(6).c_str()), // Strip "Basic "
+				sourceLength - 6 // Strip "Basic "
+		);
+
+		// Failure of decoding
+		if (res != 0) {
+			Serial.println("decode fail");
+			delete[] bufOut;
+			return std::string();
+		}
+
+		std::string tokenRes = std::string((char*)bufOut, outputLength);
+		delete[] bufOut;
+		return tokenRes;
 	}
 }
 

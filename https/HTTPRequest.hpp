@@ -11,6 +11,8 @@
 #include <Arduino.h>
 #include <string>
 
+#include <mbedtls/base64.h>
+
 #include "util.hpp"
 
 #include "ConnectionContext.hpp"
@@ -26,6 +28,7 @@ public:
 	virtual ~HTTPRequest();
 
 	std::string getHeader(std::string name);
+	void setHeader(std::string name, std::string value);
 	std::string getRequestString();
 	std::string getMethod();
 
@@ -35,7 +38,10 @@ public:
 	bool   requestComplete();
 	void   discardRequestBody();
 	ResourceParameters * getParams();
+	std::string getBasicAuthUser();
+	std::string getBasicAuthPassword();
 private:
+	std::string decodeBasicAuthToken();
 	ConnectionContext * _con;
 
 	HTTPHeaders * _headers;
